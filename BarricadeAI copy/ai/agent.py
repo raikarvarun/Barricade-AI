@@ -16,8 +16,7 @@ class Agent:
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
         )
-        
-        print("Using:", self.device)
+
         self.policy_net = DQN().to(self.device)
         self.target_net = DQN().to(self.device)
 
@@ -53,7 +52,7 @@ class Agent:
         if random.random() < self.epsilon:
             return random.randint(0, self.action_size - 1)
 
-        state = torch.FloatTensor(state).to(self.device)
+        state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
 
         with torch.no_grad():
             q = self.policy_net(state)
@@ -142,14 +141,10 @@ class Agent:
                 self.policy_net.state_dict()
             )
 
-        
-    def end_episode(self):
         if self.epsilon > self.epsilon_min:
-  
+
             self.epsilon *= self.epsilon_decay
 
-            if self.epsilon < self.epsilon_min:
-                self.epsilon = self.epsilon_min
     #################################################
 
     def save(self, filename="model.pth"):
