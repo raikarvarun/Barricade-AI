@@ -51,7 +51,7 @@ class PlayerAgent:
         )
 
         if len(valid_actions) == 0:
-            return None
+            return 0
 
         # -----------------------------
         # Exploration
