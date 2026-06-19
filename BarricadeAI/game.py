@@ -422,16 +422,24 @@ class Game:
         stats = [
 
             ("Episode", self.episode),
+            ("P1 Walls", self.board.players[0].walls_remaining),
+            ("P2 Walls", self.board.players[1].walls_remaining),
+            ("P1 Wins", self.player1_wins),
+            ("P2 Wins", self.player2_wins),
+            
+            
+            
             ("Reward", self.reward),
             ("Steps", self.steps),
-            ("Epsilon", f"{self.agent.epsilon:.3f}"),
+            ("P1 Epsilon", f"{self.player1.epsilon:.3f}"),
+            ("P2 Epsilon", f"{self.player2.epsilon:.3f}"),
             ("Replay Size", len(self.agent.memory)),
-            ("Barricades", len(self.board.barricades)),
             ("Training", "Running" if self.training else "Paused")
 
         ]
 
-        y = 520
+        #y = 520
+        y = 30
 
         for label, value in stats:
 
@@ -441,7 +449,7 @@ class Game:
                 (255, 255, 255)
             )
 
-            self.screen.blit(text, (835, y))
+            self.screen.blit(text, (1200, y))
 
             y += 35
    

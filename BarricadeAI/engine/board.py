@@ -17,12 +17,13 @@ class Player:
     goal_row: int
 
     value: int
+    walls_remaining: int = 10
 # Movement actions
 UP = 0
 DOWN = 1
 LEFT = 2
 RIGHT = 3
-
+PLACE_WALL = 4
 
 class Board:
 
@@ -82,7 +83,59 @@ class Board:
 
         return False
     #########################################################
+    def shortest_path_length(self,start_row,start_col,goal_row):
 
+        visited = set()
+
+        queue = deque()
+
+        queue.append(
+            (
+                start_row,
+                start_col,
+                0
+            )
+        )
+
+        visited.add(
+            (
+                start_row,
+                start_col
+            )
+        )
+
+        while queue:
+
+            row, col, distance = queue.popleft()
+
+            if row == goal_row:
+
+                return distance
+
+            for nr, nc in self.neighbors(
+                row,
+                col
+            ):
+
+                if (nr, nc) not in visited:
+
+                    visited.add(
+                        (
+                            nr,
+                            nc
+                        )
+                    )
+
+                    queue.append(
+                        (
+                            nr,
+                            nc,
+                            distance + 1
+                        )
+                    )
+
+        return 9999
+    
     def neighbors(self, row, col):
 
         result = []
@@ -180,7 +233,102 @@ class Board:
 
             if self.place_barricade(row, col):
                 placed += 1
-        
+                
+    def get_opponent(self, player_id):
+
+        if player_id == 0:
+            return self.players[1]
+        return self.players[0]
+    
+    def place_best_wall(self, player_id):
+        player = self.players[player_id]
+
+        if player.walls_remaining <= 0:
+            return False
+
+        opponent = self.get_opponent(player_id)
+
+        best_wall = None
+
+        best_score = -1
+        for dr in (-2, 0, 2):
+            for dc in (-2, 0, 2):
+
+                base_row = opponent.row + dr
+                base_col = opponent.col + dc
+
+                # =====================================
+                # Horizontal wall
+                # =====================================
+
+                h_row = base_row - 1
+                h_col = base_col
+
+                if self.place_barricade(
+                    h_row,
+                    h_col
+                ):
+
+                    score = self.shortest_path_length(
+                        opponent.row,
+                        opponent.col,
+                        opponent.goal_row
+                    )
+
+                    wall = self.barricades[-1]
+
+                    self.remove_barricade(wall)
+
+                    if score > best_score:
+
+                        best_score = score
+
+                        best_wall = (
+                            h_row,
+                            h_col
+                        )
+
+                # =====================================
+                # Vertical wall
+                # =====================================
+
+                v_row = base_row
+                v_col = base_col - 1
+
+                if self.place_barricade(
+                    v_row,
+                    v_col
+                ):
+
+                    score = self.shortest_path_length(
+                        opponent.row,
+                        opponent.col,
+                        opponent.goal_row
+                    )
+
+                    wall = self.barricades[-1]
+
+                    self.remove_barricade(wall)
+
+                    if score > best_score:
+
+                        best_score = score
+
+                        best_wall = (
+                            v_row,
+                            v_col
+                        )
+        if best_wall is None:
+            return False
+
+        if self.place_barricade(best_wall[0],best_wall[1]):
+
+            player.walls_remaining -= 1
+
+            return True
+
+        return False
+    
     def reset(self):
         self.grid.fill(Board.EMPTY)
 
@@ -195,7 +343,8 @@ class Board:
                 row=16,
                 col=8,
                 goal_row=0,
-                value=Board.PLAYER1
+                value=Board.PLAYER1,
+                walls_remaining=10
             ),
 
             Player(
@@ -203,7 +352,8 @@ class Board:
                 row=0,
                 col=8,
                 goal_row=16,
-                value=Board.PLAYER2
+                value=Board.PLAYER2,
+                walls_remaining=10
             )
 
         ]
@@ -212,7 +362,7 @@ class Board:
 
             self.grid[player.row][player.col] = player.value
 
-        self.generate_random_maze(20)
+        #self.generate_random_maze(20)
 
         return self.get_state()
 
@@ -363,6 +513,10 @@ class Board:
 
         self.barricades.append(wall)
         # Ensure a path still exists
+        if not self.all_players_have_path():
+            self.remove_barricade(wall)
+
+            return False
         if not self.path_exists(self.players[0].row,self.players[0].col):
             self.remove_barricade(wall)
             return False
@@ -371,7 +525,20 @@ class Board:
             self.remove_barricade(wall)
             return False
         return True
+    
+    def all_players_have_path(self):
 
+        for player in self.players:
+
+            if self.shortest_path_length(
+                player.row,
+                player.col,
+                player.goal_row
+            ) == 9999:
+
+                return False
+
+        return True
     #########################################################
     def move_player(self, player_id, action):
         player = self.players[player_id]
@@ -492,107 +659,35 @@ class Board:
                 continue
 
             actions.append(action)
+        player = self.players[player_id]
 
+        if player.walls_remaining > 0:
+            actions.append(PLACE_WALL)
         return actions
-    # def can_move(self, action):
-
-    #     row = self.player_row
-    #     col = self.player_col
-
-    #     if action == UP:
-
-    #         if row == 0:
-    #             return False
-
-    #         if self.grid[row - 1][col] == Board.BARRICADE:
-    #             return False
-
-    #         return True
-
-    #     elif action == DOWN:
-
-    #         if row == 16:
-    #             return False
-
-    #         if self.grid[row + 1][col] == Board.BARRICADE:
-    #             return False
-
-    #         return True
-
-    #     elif action == LEFT:
-
-    #         if col == 0:
-    #             return False
-
-    #         if self.grid[row][col - 1] == Board.BARRICADE:
-    #             return False
-
-    #         return True
-
-    #     elif action == RIGHT:
-
-    #         if col == 16:
-    #             return False
-
-    #         if self.grid[row][col + 1] == Board.BARRICADE:
-    #             return False
-
-    #         return True
-
-    #     return False
-
-    #########################################################
-
-    # def move(self, action):
-
-    #     if not self.can_move(action):
-    #         return False
-
-    #     self.grid[self.player_row][self.player_col] = Board.EMPTY
-
-    #     if action == UP:
-    #         self.player_row -= 2
-
-    #     elif action == DOWN:
-    #         self.player_row += 2
-
-    #     elif action == LEFT:
-    #         self.player_col -= 2
-
-    #     elif action == RIGHT:
-    #         self.player_col += 2
-
-    #     self.grid[self.player_row][self.player_col] = Board.PLAYER
-
-    #     return True
-
-    #########################################################
-
-    # def reached_goal(self):
-
-    #     return self.player_row == 0
-
-    #########################################################
-
-    # def step(self, action):
-
-    #     reward = -1
-    #     done = False
-
-    #     moved = self.move(action)
-
-    #     if not moved:
-    #         reward = -5
-
-    #     if self.reached_goal():
-            
-    #         reward = 100
-    #         done = True
-
-    #     return self.get_state(), reward, done
+    
+    
     
     def step(self, player_id, action):
+        if action == PLACE_WALL:
+            placed = self.place_best_wall(
+                player_id
+            )
 
+            if placed:
+
+                return (
+                    self.get_state(),
+                    2,
+                    False,
+                    None
+                )
+
+            return (
+                self.get_state(),
+                -10,
+                False,
+                None
+            )
         reward = -1
         done = False
 
