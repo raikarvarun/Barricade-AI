@@ -97,7 +97,7 @@ class SharedAgent:
 
         PLACE_WALL = 4
 
-        wall_mask = move_actions == PLACE_WALL
+        wall_mask = (move_actions == PLACE_WALL)
         if wall_mask.any():
             current_wall_q = (
                 wall_q[wall_mask]
@@ -121,6 +121,8 @@ class SharedAgent:
 
         self.optimizer.step()
 
+        
+        
         self.train_steps += 1
 
         if self.train_steps % self.target_update == 0:

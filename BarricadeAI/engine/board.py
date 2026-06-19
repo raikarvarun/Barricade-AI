@@ -53,11 +53,116 @@ class Board:
         self.current_player = 0
 
         self.winner = None
+        self.wall_action_map = []
+
+        self.build_wall_action_map()
 
         self.reset()
 
     #########################################################
+    def is_legal_wall_action(self,wall_action):
 
+        wall = self.get_wall_from_action(
+            wall_action
+        )
+
+        if wall is None:
+            return False
+
+        row, col, wall_type = wall
+
+        if self.place_barricade(
+            row,
+            col
+        ):
+
+            wall = self.barricades[-1]
+
+            self.remove_barricade(
+                wall
+            )
+
+            return True
+
+        return False
+    
+    def get_legal_wall_mask(self):
+        legal = []
+
+        for index, (
+            row,
+            col,
+            wall_type
+        ) in enumerate(
+            self.wall_action_map
+        ):
+
+            if self.place_barricade(
+                row,
+                col
+            ):
+
+                wall = self.barricades[-1]
+
+                self.remove_barricade(
+                    wall
+                )
+
+                legal.append(index)
+
+        return legal
+    
+    
+    def get_wall_from_action(self,wall_action):
+
+        if wall_action < 0:
+            return None
+
+        if wall_action >= len(
+            self.wall_action_map
+        ):
+            return None
+
+        return self.wall_action_map[
+            wall_action
+        ]
+    
+    def build_wall_action_map(self):
+        self.wall_action_map.clear()
+        # -------------------------
+        # Horizontal walls
+        # -------------------------
+        for row in range(1, self.size, 2):
+
+            for col in range(0, self.size - 2, 2):
+
+                self.wall_action_map.append(
+                    (
+                        row,
+                        col,
+                        BarricadeType.HORIZONTAL
+                    )
+                )
+
+        # -------------------------
+        # Vertical walls
+        # -------------------------
+        for row in range(0, self.size - 2, 2):
+
+            for col in range(1, self.size, 2):
+
+                self.wall_action_map.append(
+                    (
+                        row,
+                        col,
+                        BarricadeType.VERTICAL
+                    )
+                )
+
+        print(
+            "Wall Actions:",
+            len(self.wall_action_map)
+        )
     def path_exists(self, start_row, start_col):
 
         visited = set()
@@ -415,7 +520,7 @@ class Board:
         if wall in self.barricades:
             self.barricades.remove(wall)
 
-    def place_barricade(self, row, col):
+    def place_barricade(self, row, col,owner=-1):
 
         if self.is_horizontal_slot(row, col):
 
@@ -426,6 +531,7 @@ class Board:
                 row,
                 col,
                 BarricadeType.HORIZONTAL,
+                owner
             )
 
         elif self.is_vertical_slot(row, col):
@@ -437,6 +543,7 @@ class Board:
                 row,
                 col,
                 BarricadeType.VERTICAL,
+                owner
             )
 
         else:
@@ -616,9 +723,11 @@ class Board:
     def step(self, player_id, move_action,wall_action):
         PLACE_WALL = 4
         if move_action == PLACE_WALL:
-            candidate_walls = self.get_candidate_walls(player_id)
-            
-            if wall_action < 0:
+
+            player = self.players[player_id]
+
+            if player.walls_remaining <= 0:
+
                 return (
                     self.get_state(),
                     -10,
@@ -626,25 +735,43 @@ class Board:
                     None
                 )
 
-            if wall_action >= len(candidate_walls):
+            wall = self.get_wall_from_action(
+                wall_action
+            )
+
+            if wall is None:
+
                 return (
                     self.get_state(),
                     -10,
                     False,
                     None
                 )
+            row, col, wall_type = wall
             
-            row, col, wall_type = candidate_walls[wall_action]
-            success = self.place_barricade(row,col)
-            
-            if success:
-                self.players[
-                    player_id
-                ].walls_remaining -= 1
+            success = self.place_barricade(
+                row,
+                col,
+                player_id
+            )
 
-                return ( self.get_state(),2,False,None )
+            if not success:
+
+                return (
+                    self.get_state(),
+                    -10,
+                    False,
+                    None
+                )
+            player.walls_remaining -= 1
             
-            return ( self.get_state(),-10,False,None)
+            return (
+                self.get_state(),
+                2,
+                False,
+                None
+            )
+            
         
             
         
@@ -753,3 +880,50 @@ class Board:
         scored.sort(reverse=True)
         scored = scored[:20]
         return [(row, col, wall_type) for _, row, col, wall_type in scored]
+    
+    def get_all_legal_walls(self):
+        walls = []
+
+        # -----------------------------
+        # Horizontal walls
+        # -----------------------------
+        for row in range(1, self.size, 2):
+
+            for col in range(0, self.size - 2, 2):
+
+                if self.place_barricade(row, col):
+
+                    wall = self.barricades[-1]
+
+                    self.remove_barricade(wall)
+
+                    walls.append(
+                        (
+                            row,
+                            col,
+                            BarricadeType.HORIZONTAL
+                        )
+                    )
+
+        # -----------------------------
+        # Vertical walls
+        # -----------------------------
+        for row in range(0, self.size - 2, 2):
+
+            for col in range(1, self.size, 2):
+
+                if self.place_barricade(row, col):
+
+                    wall = self.barricades[-1]
+
+                    self.remove_barricade(wall)
+
+                    walls.append(
+                        (
+                            row,
+                            col,
+                            BarricadeType.VERTICAL
+                        )
+                    )
+
+        return walls

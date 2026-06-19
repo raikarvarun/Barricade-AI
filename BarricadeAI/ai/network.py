@@ -4,7 +4,7 @@ import torch.nn as nn
 
 class DQN(nn.Module):
 
-    def __init__(self, state_size=290, move_actions=5, wall_actions=20):
+    def __init__(self, state_size=297, move_actions=5, wall_actions=144):
 
         super().__init__()
 

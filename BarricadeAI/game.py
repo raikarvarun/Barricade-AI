@@ -171,7 +171,7 @@ class Game:
     def environment_step(self):
 
         self.steps += 1
-
+        
         # ---------------------------------------
         # Current player
         # ---------------------------------------
@@ -181,8 +181,8 @@ class Game:
         else:
             agent = self.player2
 
-        state = self.state
-
+        agent = self.get_current_agent()
+        state = agent.build_state(self.board)
         # ---------------------------------------
         # Choose action
         # ---------------------------------------
@@ -195,7 +195,13 @@ class Game:
 
         next_state, reward, done, winner = self.board.step(
             self.current_player,move_action,wall_action)
+        
+        next_state = agent.build_state(self.board)
+        if self.steps >= 5000:
 
+            done = True
+
+            winner = -1
         # ---------------------------------------
         # Store transition
         # ---------------------------------------
@@ -223,11 +229,17 @@ class Game:
         # ---------------------------------------
 
         if done:
+            if winner != -1:
 
-            if winner == 0:
-                self.player1_wins += 1
+                if winner == 0:
+                    self.player1_wins += 1
+
+                else:
+                    self.player2_wins += 1
+
             else:
-                self.player2_wins += 1
+                draws = 1
+
 
             print(
                 f"Episode {self.episode} | "

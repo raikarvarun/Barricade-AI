@@ -8,11 +8,12 @@ class BarricadeType(Enum):
 
 class Barricade:
 
-    def __init__(self, row: int, col: int, barricade_type: BarricadeType):
+    def __init__(self, row: int, col: int, barricade_type: BarricadeType , owner:int):
 
         self.row = row
         self.col = col
         self.type = barricade_type
+        self.owner = owner
 
     @property
     def cells(self):

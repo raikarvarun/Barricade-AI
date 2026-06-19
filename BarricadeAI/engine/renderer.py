@@ -151,12 +151,31 @@ class Renderer:
                 ################################################
 
                 elif board.grid[row][col] == board.BARRICADE:
-
+                    modi_bari_color = BARRICADE_COLOR
+                    for wall in board.barricades:
+                        if (row, col) in wall.cells:
+                            if wall.owner == 0:
+                                modi_bari_color = (
+                                    50,
+                                    120,
+                                    255
+                                )
+                                
+                            elif wall.owner == 1:
+                                modi_bari_color = (
+                                    50,
+                                    220,
+                                    50
+                                )
+                                
+                                
+                            break
+                        
                     pygame.draw.rect(
 
                         self.screen,
 
-                        BARRICADE_COLOR,
+                        modi_bari_color,
 
                         rect,
                         5,
