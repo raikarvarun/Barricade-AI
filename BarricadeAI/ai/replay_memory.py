@@ -7,11 +7,12 @@ class ReplayMemory:
     def __init__(self, capacity=20000):
         self.memory = deque(maxlen=capacity)
 
-    def push(self, state, action, reward, next_state, done):
+    def push(self, state, move_action, wall_action, reward, next_state, done):
         self.memory.append(
             (
                 state,
-                action,
+                move_action,   
+                wall_action,   
                 reward,
                 next_state,
                 done,

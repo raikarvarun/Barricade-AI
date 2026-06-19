@@ -6,6 +6,7 @@ import random
 
 from dataclasses import dataclass
 
+
 @dataclass
 class Player:
 
@@ -18,12 +19,15 @@ class Player:
 
     value: int
     walls_remaining: int = 10
+
+
 # Movement actions
 UP = 0
 DOWN = 1
 LEFT = 2
 RIGHT = 3
 PLACE_WALL = 4
+
 
 class Board:
 
@@ -52,7 +56,6 @@ class Board:
 
         self.reset()
 
-    
     #########################################################
 
     def path_exists(self, start_row, start_col):
@@ -82,27 +85,17 @@ class Board:
                     queue.append((nr, nc))
 
         return False
+
     #########################################################
-    def shortest_path_length(self,start_row,start_col,goal_row):
+    def shortest_path_length(self, start_row, start_col, goal_row):
 
         visited = set()
 
         queue = deque()
 
-        queue.append(
-            (
-                start_row,
-                start_col,
-                0
-            )
-        )
+        queue.append((start_row, start_col, 0))
 
-        visited.add(
-            (
-                start_row,
-                start_col
-            )
-        )
+        visited.add((start_row, start_col))
 
         while queue:
 
@@ -112,30 +105,16 @@ class Board:
 
                 return distance
 
-            for nr, nc in self.neighbors(
-                row,
-                col
-            ):
+            for nr, nc in self.neighbors(row, col):
 
                 if (nr, nc) not in visited:
 
-                    visited.add(
-                        (
-                            nr,
-                            nc
-                        )
-                    )
+                    visited.add((nr, nc))
 
-                    queue.append(
-                        (
-                            nr,
-                            nc,
-                            distance + 1
-                        )
-                    )
+                    queue.append((nr, nc, distance + 1))
 
         return 9999
-    
+
     def neighbors(self, row, col):
 
         result = []
@@ -199,7 +178,7 @@ class Board:
             return True
 
         return False
-    
+
     #########################################################
     def load_test_board(self):
         # -----------------------------
@@ -208,8 +187,7 @@ class Board:
         self.place_barricade(13, 4)
         self.place_barricade(13, 0)
         self.place_barricade(13, 8)
-        
-        
+
     #########################################################
 
     def generate_random_maze(self, wall_count=15):
@@ -233,13 +211,13 @@ class Board:
 
             if self.place_barricade(row, col):
                 placed += 1
-                
+
     def get_opponent(self, player_id):
 
         if player_id == 0:
             return self.players[1]
         return self.players[0]
-    
+
     def place_best_wall(self, player_id):
         player = self.players[player_id]
 
@@ -264,15 +242,10 @@ class Board:
                 h_row = base_row - 1
                 h_col = base_col
 
-                if self.place_barricade(
-                    h_row,
-                    h_col
-                ):
+                if self.place_barricade(h_row, h_col):
 
                     score = self.shortest_path_length(
-                        opponent.row,
-                        opponent.col,
-                        opponent.goal_row
+                        opponent.row, opponent.col, opponent.goal_row
                     )
 
                     wall = self.barricades[-1]
@@ -283,10 +256,7 @@ class Board:
 
                         best_score = score
 
-                        best_wall = (
-                            h_row,
-                            h_col
-                        )
+                        best_wall = (h_row, h_col)
 
                 # =====================================
                 # Vertical wall
@@ -295,15 +265,10 @@ class Board:
                 v_row = base_row
                 v_col = base_col - 1
 
-                if self.place_barricade(
-                    v_row,
-                    v_col
-                ):
+                if self.place_barricade(v_row, v_col):
 
                     score = self.shortest_path_length(
-                        opponent.row,
-                        opponent.col,
-                        opponent.goal_row
+                        opponent.row, opponent.col, opponent.goal_row
                     )
 
                     wall = self.barricades[-1]
@@ -314,21 +279,18 @@ class Board:
 
                         best_score = score
 
-                        best_wall = (
-                            v_row,
-                            v_col
-                        )
+                        best_wall = (v_row, v_col)
         if best_wall is None:
             return False
 
-        if self.place_barricade(best_wall[0],best_wall[1]):
+        if self.place_barricade(best_wall[0], best_wall[1]):
 
             player.walls_remaining -= 1
 
             return True
 
         return False
-    
+
     def reset(self):
         self.grid.fill(Board.EMPTY)
 
@@ -337,32 +299,19 @@ class Board:
         self.winner = None
 
         self.players = [
-
             Player(
-                id=0,
-                row=16,
-                col=8,
-                goal_row=0,
-                value=Board.PLAYER1,
-                walls_remaining=10
+                id=0, row=16, col=8, goal_row=0, value=Board.PLAYER1, walls_remaining=10
             ),
-
             Player(
-                id=1,
-                row=0,
-                col=8,
-                goal_row=16,
-                value=Board.PLAYER2,
-                walls_remaining=10
-            )
-
+                id=1, row=0, col=8, goal_row=16, value=Board.PLAYER2, walls_remaining=10
+            ),
         ]
 
         for player in self.players:
 
             self.grid[player.row][player.col] = player.value
 
-        #self.generate_random_maze(20)
+        # self.generate_random_maze(20)
 
         return self.get_state()
 
@@ -370,7 +319,7 @@ class Board:
     def get_player(self, player_id):
 
         return self.players[player_id]
-    
+
     def get_state(self):
 
         return self.grid.copy()
@@ -385,10 +334,8 @@ class Board:
 
     def in_bounds(self, row, col):
 
-        return (
-            0 <= row < self.size and
-            0 <= col < self.size
-        )
+        return 0 <= row < self.size and 0 <= col < self.size
+
     #########################################################
 
     def is_empty(self, row, col):
@@ -403,7 +350,7 @@ class Board:
             return False
 
         return self.grid[row][col] == Board.BARRICADE
-    
+
     #########################################################
 
     def can_place_cells(self, cells):
@@ -417,9 +364,8 @@ class Board:
                 return False
 
         return True
-    
-    #########################################################
 
+    #########################################################
 
     def crosses_existing_wall(self, row, col, wall_type):
 
@@ -440,9 +386,9 @@ class Board:
                 return True
 
         return False
-    
+
     #########################################################
-    
+
     def is_player_cell(self, row, col):
 
         return row % 2 == 0 and col % 2 == 0
@@ -468,8 +414,7 @@ class Board:
 
         if wall in self.barricades:
             self.barricades.remove(wall)
-    
-    
+
     def place_barricade(self, row, col):
 
         if self.is_horizontal_slot(row, col):
@@ -517,28 +462,28 @@ class Board:
             self.remove_barricade(wall)
 
             return False
-        if not self.path_exists(self.players[0].row,self.players[0].col):
+        if not self.path_exists(self.players[0].row, self.players[0].col):
             self.remove_barricade(wall)
             return False
 
-        if not self.path_exists(self.players[1].row,self.players[1].col):
+        if not self.path_exists(self.players[1].row, self.players[1].col):
             self.remove_barricade(wall)
             return False
         return True
-    
+
     def all_players_have_path(self):
 
         for player in self.players:
 
-            if self.shortest_path_length(
-                player.row,
-                player.col,
-                player.goal_row
-            ) == 9999:
+            if (
+                self.shortest_path_length(player.row, player.col, player.goal_row)
+                == 9999
+            ):
 
                 return False
 
         return True
+
     #########################################################
     def move_player(self, player_id, action):
         player = self.players[player_id]
@@ -598,8 +543,7 @@ class Board:
         self.grid[new_row][new_col] = player.value
 
         return True
-    
-    
+
     def get_valid_actions(self, player_id):
 
         player = self.players[player_id]
@@ -664,30 +608,46 @@ class Board:
         if player.walls_remaining > 0:
             actions.append(PLACE_WALL)
         return actions
-    
-    
-    
-    def step(self, player_id, action):
-        if action == PLACE_WALL:
-            placed = self.place_best_wall(
-                player_id
-            )
 
-            if placed:
 
+
+
+
+    def step(self, player_id, move_action,wall_action):
+        PLACE_WALL = 4
+        if move_action == PLACE_WALL:
+            candidate_walls = self.get_candidate_walls(player_id)
+            
+            if wall_action < 0:
                 return (
                     self.get_state(),
-                    2,
+                    -10,
                     False,
                     None
                 )
 
-            return (
-                self.get_state(),
-                -10,
-                False,
-                None
-            )
+            if wall_action >= len(candidate_walls):
+                return (
+                    self.get_state(),
+                    -10,
+                    False,
+                    None
+                )
+            
+            row, col, wall_type = candidate_walls[wall_action]
+            success = self.place_barricade(row,col)
+            
+            if success:
+                self.players[
+                    player_id
+                ].walls_remaining -= 1
+
+                return ( self.get_state(),2,False,None )
+            
+            return ( self.get_state(),-10,False,None)
+        
+            
+        
         reward = -1
         done = False
 
@@ -696,21 +656,13 @@ class Board:
         # -----------------------------
         # Try to move
         # -----------------------------
-        moved = self.move_player(
-            player_id,
-            action
-        )
+        moved = self.move_player(player_id, move_action)
 
         if not moved:
 
             reward = -5
 
-            return (
-                self.get_state(),
-                reward,
-                done,
-                None
-            )
+            return (self.get_state(), reward, done, None)
 
         # -----------------------------
         # Goal reached?
@@ -723,16 +675,81 @@ class Board:
 
             self.winner = player_id
 
-            return (
-                self.get_state(),
-                reward,
-                done,
-                player_id
-            )
+            return (self.get_state(), reward, done, player_id)
 
-        return (
-            self.get_state(),
-            reward,
-            done,
-            None
+        return (self.get_state(), reward, done, None)
+
+
+
+
+
+
+    def score_wall_candidate(self, player_id, row, col, wall_type):
+        opponent = self.get_opponent(player_id)
+
+        before = self.shortest_path_length(
+            opponent.row, opponent.col, opponent.goal_row
         )
+        if not self.place_barricade(row, col):
+            return -999
+        after = self.shortest_path_length(opponent.row, opponent.col, opponent.goal_row)
+        wall = self.barricades[-1]
+        self.remove_barricade(wall)
+        return after - before
+
+    def get_candidate_walls(self, player_id):
+
+        opponent = self.get_opponent(player_id)
+
+        candidates = []
+
+        visited = set()
+        for dr in (-4, -2, 0, 2, 4):
+
+            for dc in (-4, -2, 0, 2, 4):
+
+                base_row = opponent.row + dr
+                base_col = opponent.col + dc
+                h_row = base_row - 1
+                h_col = base_col
+
+                key = (h_row, h_col)
+
+                if key not in visited:
+
+                    if self.is_horizontal_slot(h_row, h_col):
+
+                        wall = Barricade(h_row, h_col, BarricadeType.HORIZONTAL)
+
+                        if self.can_place_cells(wall.cells):
+
+                            candidates.append((h_row, h_col, BarricadeType.HORIZONTAL))
+
+                            visited.add(key)
+
+                v_row = base_row
+                v_col = base_col - 1
+
+                key = (v_row, v_col)
+
+                if key not in visited:
+
+                    if self.is_vertical_slot(v_row, v_col):
+
+                        wall = Barricade(v_row, v_col, BarricadeType.VERTICAL)
+
+                        if self.can_place_cells(wall.cells):
+
+                            candidates.append((v_row, v_col, BarricadeType.VERTICAL))
+
+                            visited.add(key)
+        scored = []
+
+        for row, col, wall_type in candidates:
+            score = self.score_wall_candidate(player_id, row, col, wall_type)
+            if score > 0:
+                scored.append((score, row, col, wall_type))
+
+        scored.sort(reverse=True)
+        scored = scored[:20]
+        return [(row, col, wall_type) for _, row, col, wall_type in scored]

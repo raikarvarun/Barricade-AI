@@ -131,13 +131,13 @@ class Game:
 
             elif self.btn_save.clicked(event):
 
-                self.agent.save()
+                self.shared_agent.save_checkpoint("checkpoint.pth",self)
 
                 print("Model Saved")
 
             elif self.btn_load.clicked(event):
 
-                self.agent.load()
+                self.shared_agent.load_checkpoint("checkpoint.pth",self)
 
                 print("Model Loaded")
 
@@ -187,16 +187,14 @@ class Game:
         # Choose action
         # ---------------------------------------
 
-        action = agent.choose_action(self.board)
+        move_action, wall_action = agent.choose_action(self.board)
 
         # ---------------------------------------
         # Environment step
         # ---------------------------------------
 
         next_state, reward, done, winner = self.board.step(
-            self.current_player,
-            action
-        )
+            self.current_player,move_action,wall_action)
 
         # ---------------------------------------
         # Store transition
@@ -204,7 +202,8 @@ class Game:
 
         agent.remember(
             state,
-            action,
+            move_action,    
+            wall_action,
             reward,
             next_state,
             done
@@ -242,7 +241,13 @@ class Game:
 
             self.steps = 0
             self.reward = 0
+            
+            # Auto save every 10 episodes
+            if self.episode % 10 == 0:
+                self.shared_agent.save_checkpoint(f"saves/ep_{self.episode}.pth",self)
 
+                print(f"Checkpoint saved: "f"ep_{self.episode}.pth")
+                
             self.state = self.board.reset()
 
             self.current_player = 0
@@ -255,82 +260,11 @@ class Game:
 
         self.current_player = 1 - self.current_player
     
-    def environment_step1(self):
-
-        self.steps += 1
-
-        action = self.agent.choose_action(self.state)
-
-        next_state, reward, done = self.board.step(action)
-
-        self.agent.remember(
-            self.state,
-            action,
-            reward,
-            next_state,
-            done,
-        )
-
-        self.agent.train()
-
-        self.state = next_state
-
-        self.reward += reward
-
-        if done:
-
-            print(
-                f"Episode {self.episode} "
-                f"Epsilon {self.agent.epsilon:.3f}"
-            )
-
-            self.episode += 1
-
-            self.state = self.board.reset()
-
-            self.steps = 0
-            self.reward = 0
+    
     
 
-        
-    def update(self):
 
-        self.steps += 1
-
-        action = self.agent.choose_action(self.state)
-
-        next_state, reward, done = self.board.step(action)
-
-        # End episode if it takes too long
-        if self.steps >= MAX_EPISODE_STEPS:
-            done = True
-            reward -= 100   # Optional penalty
-        
-        self.agent.remember(
-            self.state,
-            action,
-            reward,
-            next_state,
-            done,
-        )
-
-        self.agent.train()
-
-        self.state = next_state
-
-        self.reward += reward
-        
-        if done:
-            print(
-                f"Episode {self.episode} "
-                f"Epsilon {self.agent.epsilon:.3f}"
-            )
-            self.agent.end_episode()
-            self.episode += 1
-            self.state = self.board.reset()
-            self.steps = 0
-            self.reward = 0
-
+    
     ######################################################
 
     def reset_episode(self):
@@ -392,33 +326,7 @@ class Game:
             (1170, 500),
             1
         )
-        # labels = [
-
-        #     f"Episode : {game.episode}",
-
-        #     f"Steps : {game.steps}",
-
-        #     f"Turn : Player {game.current_player + 1}",
-
-        #     "",
-
-        #     f"P1 Wins : {game.player1_wins}",
-
-        #     f"P2 Wins : {game.player2_wins}",
-
-        #     "",
-
-        #     f"P1 ε : {game.player1.epsilon:.3f}",
-
-        #     f"P2 ε : {game.player2.epsilon:.3f}",
-
-        #     "",
-
-        #     f"P1 Replay : {len(game.player1.memory)}",
-
-        #     f"P2 Replay : {len(game.player2.memory)}"
-
-        # ]
+        
         stats = [
 
             ("Episode", self.episode),

@@ -4,27 +4,31 @@ import torch.nn as nn
 
 class DQN(nn.Module):
 
-    def __init__(self, state_size=290, action_size=5):
+    def __init__(self, state_size=290, move_actions=5, wall_actions=20):
 
         super().__init__()
 
-        self.model = nn.Sequential(
-
+        self.backbone = nn.Sequential(
             nn.Linear(state_size, 256),
             nn.ReLU(),
-
             nn.Linear(256, 256),
             nn.ReLU(),
-
             nn.Linear(256, 128),
             nn.ReLU(),
-
-            nn.Linear(128, action_size)
-
         )
+
+        self.move_head = nn.Linear(128, move_actions)
+
+        self.wall_head = nn.Linear(128, wall_actions)
 
     #########################################################
 
     def forward(self, x):
 
-        return self.model(x)
+        features = self.backbone(x)
+
+        move_q = self.move_head(features)
+
+        wall_q = self.wall_head(features)
+
+        return move_q, wall_q

@@ -44,36 +44,84 @@ class PlayerAgent:
 
     def choose_action(self, board):
 
-        state = self.build_state(board.get_state())
+        state = self.build_state(
+            board.get_state()
+        )
 
         valid_actions = board.get_valid_actions(
             self.player_id
         )
 
-        if len(valid_actions) == 0:
-            return 0
+        candidate_walls = board.get_candidate_walls(
+            self.player_id
+        )
 
-        # -----------------------------
+        # -----------------------------------
         # Exploration
-        # -----------------------------
+        # -----------------------------------
+
         if random.random() < self.epsilon:
 
-            return random.choice(valid_actions)
+            move_action = random.choice(
+                valid_actions
+            )
 
-        # -----------------------------
+            if move_action == 4:
+
+                if len(candidate_walls) == 0:
+
+                    return random.choice(
+                        [a for a in valid_actions if a != 4]
+                    ), -1
+
+                wall_action = random.randint(
+                    0,
+                    len(candidate_walls) - 1
+                )
+
+                return move_action, wall_action
+
+            return move_action, -1
+
+        # -----------------------------------
         # Exploitation
-        # -----------------------------
-        q_values = self.shared_agent.predict(state)
+        # -----------------------------------
 
-        q_values = q_values.clone()
+        move_q, wall_q = self.shared_agent.predict(
+            state
+        )
+        move_q = move_q.clone()
 
-        for action in range(4):
+        for action in range(5):
 
             if action not in valid_actions:
 
-                q_values[action] = -1e9
+                move_q[action] = -1e9
 
-        return int(q_values.argmax().item())
+        move_action = int(
+            move_q.argmax().item()
+        )
+        
+        if move_action != 4:
+            return move_action, -1
+        
+        if len(candidate_walls) == 0:
+            fallback = move_q.clone()
+
+            fallback[4] = -1e9
+
+            move_action = int(
+                fallback.argmax().item()
+            )
+
+            return move_action, -1
+        
+        wall_q = wall_q.clone()
+
+        wall_q[len(candidate_walls):] = -1e9
+        wall_action = int( wall_q.argmax().item() ) 
+
+        return move_action, wall_action
 
     #########################################################
 
@@ -83,7 +131,9 @@ class PlayerAgent:
 
         state,
 
-        action,
+        move_action,
+        
+        wall_action,
 
         reward,
 
@@ -101,7 +151,8 @@ class PlayerAgent:
 
             state,
 
-            action,
+            move_action,
+            wall_action,
 
             reward,
 
