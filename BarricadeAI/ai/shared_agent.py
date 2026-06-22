@@ -143,27 +143,45 @@ class SharedAgent:
 
         self.target_model.load_state_dict(self.model.state_dict())
 
-    def save_checkpoint(self, path, game):
-
+    def save_players(self, path):
+        
         torch.save(
+
             {
-                "model": self.model.state_dict(),
-                "target_model": self.target_model.state_dict(),
-                "optimizer": self.optimizer.state_dict(),
-                "episode": game.episode,
-                "player1_wins": game.player1_wins,
-                "player2_wins": game.player2_wins,
-                "player1_epsilon": game.player1.epsilon,
-                "player2_epsilon": game.player2.epsilon,
-                "train_steps": self.train_steps,
-                "player1_memory": game.player1.memory.memory,
-                "player2_memory": game.player2.memory.memory,
+
+                "model":
+                    self.model.state_dict(),
+
+                "target_model":
+                    self.target_model.state_dict(),
+
+                "optimizer":
+                    self.optimizer.state_dict(),
+
+                "train_steps":
+                    self.train_steps
+
             },
-            path,
+
+            path
+
         )
+    
+    def load_players(self, path):
+        checkpoint = torch.load(path, map_location=self.device,weights_only=False)
+
+        self.model.load_state_dict(checkpoint["model"])
+
+        self.target_model.load_state_dict(checkpoint["target_model"])
+
+        self.optimizer.load_state_dict(checkpoint["optimizer"])
+
+        self.train_steps = checkpoint["train_steps"]
+
+        
 
     def load_checkpoint(self, path, game):
-        checkpoint = torch.load(path, map_location=self.device)
+        checkpoint = torch.load(path, map_location=self.device,weights_only=False)
 
         self.model.load_state_dict(checkpoint["model"])
 

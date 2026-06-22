@@ -22,7 +22,7 @@ class PlayerAgent:
 
         self.epsilon = 1.0
         self.epsilon_min = 0.05
-        self.epsilon_decay = 0.999
+        self.epsilon_decay = 0.9999
 
     #########################################################
 
@@ -95,7 +95,8 @@ class PlayerAgent:
         valid_actions = board.get_valid_actions(
             self.player_id
         )
-
+        
+        
         legal_wall_ids  = board.get_legal_wall_mask()
 
         # -----------------------------------
@@ -103,7 +104,6 @@ class PlayerAgent:
         # -----------------------------------
 
         if random.random() < self.epsilon:
-
             if len(valid_actions) == 0:
 
                 return 0, -1
@@ -138,6 +138,7 @@ class PlayerAgent:
                 )
 
                 return move_action, wall_action
+            return move_action, -1
 
         # -----------------------------------
         # Exploitation
@@ -228,6 +229,8 @@ class PlayerAgent:
         self.shared_agent.train(
             self.memory
         )
+
+        
 
     #########################################################
 
